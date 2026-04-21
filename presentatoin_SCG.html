@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentation Hub: IT Empowering Day x SCG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --scg-red: #ed1c24;
+            --tech-cyan: #00f2ff;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: var(--dark-bg);
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        /* Hub Styles */
+        #hub-container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .hub-header { margin-bottom: 50px; }
+        .hub-header h1 { font-size: 3rem; margin-bottom: 10px; color: var(--tech-cyan); }
+        .hub-header p { color: #94a3b8; font-size: 1.2rem; }
+
+        .deck-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .deck-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .deck-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--tech-cyan);
+            box-shadow: 0 20px 40px rgba(0, 242, 255, 0.1);
+        }
+
+        .deck-card i { font-size: 3rem; margin-bottom: 20px; color: var(--tech-cyan); }
+        .deck-card.scg-theme i { color: var(--scg-red); }
+        .deck-card h3 { font-size: 1.5rem; margin-bottom: 10px; }
+        .deck-card p { color: #94a3b8; font-size: 0.95rem; }
+
+        /* Slide Overlay */
+        #slide-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .overlay-nav {
+            background: #111;
+            padding: 10px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .btn-group { display: flex; gap: 10px; align-items: center; }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Prompt';
+            font-weight: 600;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .btn-close { background: #ed1c24; color: white; }
+        .btn-close:hover { background: #c1161c; }
+        
+        .btn-fs { background: #334155; color: white; }
+        .btn-fs:hover { background: #475569; }
+
+        .slide-frame {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            background: #f1f5f9;
+            color: #333;
+            scroll-behavior: smooth;
+        }
+
+        /* Error Toast */
+        #error-toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ef4444;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 2000;
+            display: none;
+            animation: fadeInOut 3s forwards;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, 20px); }
+            15% { opacity: 1; transform: translate(-50%, 0); }
+            85% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, -20px); }
+        }
+
+        /* Presentation Slides */
+        .slide-content {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: none;
+        }
+
+        .active-deck { display: block; }
+
+        .slide-page {
+            min-height: 675px;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 60px;
+            padding: 80px;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #e2e8f0;
+        }
+
+        .title-slide { background: #0f172a; color: white; text-align: center; justify-content: center; border: none; }
+        .scg-slide { border-top: 10px solid var(--scg-red); }
+        .tech-slide { border-top: 10px solid var(--tech-cyan); }
+        
+        h1.s-title { font-size: 3.5rem; margin-bottom: 20px; font-weight: 700; }
+        h2.s-subtitle { font-size: 2.2rem; margin-bottom: 40px; border-bottom: 3px solid #f1f5f9; padding-bottom: 15px; color: #1e293b; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; }
+        
+.feature-item { background: #f8fafc; padding: 30px; border-radius: 15px; margin-bottom: 25px; border: 1px solid #edf2f7; position: relative; overflow: hidden; }
+        .feature-item h3 { color: var(--scg-red); margin-bottom: 12px; font-size: 1.5rem; }
+        .feature-item p { margin-bottom: 18px; }
+        .feature-item.link-card { cursor: pointer; transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease; }
+        .feature-item.link-card:hover { transform: translateY(-4px); border-color: rgba(59,130,246,0.4); background: #e2e8f0; }
+        .feature-visual { min-height: 240px; background: linear-gradient(135deg, rgba(14,165,233,0.15), rgba(219,234,254,0.95)); border-radius: 24px; padding: 30px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #bfdbfe; position: relative; overflow: hidden; }
+        .feature-visual:before { content: ''; position: absolute; top: -40px; right: -40px; width: 150px; height: 150px; background: rgba(59,130,246,0.16); border-radius: 50%; }
+        .feature-visual h3 { color: #1e40af; margin-bottom: 14px; font-size: 1.6rem; }
+        .feature-visual p { color: #1e3a8a; line-height: 1.7; margin-bottom: 18px; }
+        .feature-visual .visual-icon { display: inline-flex; justify-content: center; align-items: center; width: 72px; height: 72px; border-radius: 18px; background: rgba(14,165,233,0.18); color: #0284c7; font-size: 2rem; }
+        .mini-jobfair-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 30px; align-items: center; margin-bottom: 25px; }
+        .mini-jobfair-card { padding: 30px; border-radius: 24px; background: #f8fafc; border: 1px solid #e2e8f0; box-shadow: 0 20px 40px rgba(15,23,42,0.06); }
+        .mini-jobfair-card h3 { margin-bottom: 18px; color: #0f172a; font-size: 1.8rem; }
+        .mini-jobfair-card p { color: #334155; line-height: 1.8; margin-bottom: 18px; }
+        .mini-jobfair-card ul { margin-top: 15px; }
+        .mini-jobfair-card ul li { margin-bottom: 12px; }
+        .mini-jobfair-art { border-radius: 24px; overflow: hidden; border: 1px solid rgba(15,23,42,0.08); box-shadow: 0 20px 40px rgba(15,23,42,0.08); background: white; }
+        .mini-jobfair-art img { display: block; width: 100%; height: auto; object-fit: cover; }
+        .mini-jobfair-caption { padding: 20px 25px; font-size: 1rem; color: #334155; background: #f8fafc; text-align: center; }
+
+        @media (max-width: 900px) {
+            .mini-jobfair-grid { grid-template-columns: 1fr; }
+        }
+
+        @media print {
+            .overlay-nav, .hub-header, .deck-grid { display: none; }
+            .slide-page { page-break-after: always; box-shadow: none; border: 1px solid #ccc; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="hub-container">
+        <div class="hub-header">
+            <h1 style="color:white">IT Empowering Day <span style="color:var(--tech-cyan)">x</span> <span style="color:var(--scg-red)">SCG</span></h1>
+            <p>Strategic Collaboration Presentation</p>
+        </div>
+
+        <div class="deck-grid">
+            <div class="deck-card" onclick="openDeck('deck1')">
+                <i class="fa-solid fa-rocket"></i>
+                <h3>1. ภาพรวมโครงการ</h3>
+                <p>แนะนำ IT Empowering Day และความสำคัญของ AI ต่อทักษะนักศึกษารุ่นใหม่</p>
+            </div>
+
+            <div class="deck-card scg-theme" onclick="openDeck('deck2')">
+                <i class="fa-solid fa-briefcase"></i>
+                <h3>2. ข้อเสนอร่วมกับ SCG</h3>
+                <p>การเชิญร่วมเป็นคณะกรรมการ Senior Project และโอกาสใน Mini Job Fair</p>
+            </div>
+
+            <div class="deck-card scg-theme" onclick="openDeck('deck3')">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <h3>3. การร่วมบ่มเพาะวิชา SA&D</h3>
+                <p>แผนความร่วมมือเชิงวิชาการเพื่อสร้าง Work-Ready Talent ให้ตรงกับมาตรฐาน SCG</p>
+            </div>
+        </div>
+        
+        <div style="margin-top: 50px; color: #64748b; font-size: 0.9rem;">
+            <p><i class="fa-solid fa-circle-info"></i> แนะนำ: กดปุ่มด้านบนเพื่อเริ่มการนำเสนอ</p>
+        </div>
+    </div>
+
+    <!-- Slide Overlay -->
+    <div id="slide-overlay">
+        <div class="overlay-nav">
+            <span id="current-deck-name" style="font-weight: 600; color: white; font-size: 1.1rem;">Presentation</span>
+            <div class="btn-group">
+                <button class="btn btn-fs" onclick="toggleFullScreen()" title="เปิดเต็มจอ (อาจถูกจำกัดในโหมดพรีวิว)">
+                    <i class="fa-solid fa-expand"></i> เต็มจอ (F11)
+                </button>
+                <button class="btn btn-close" onclick="closeDeck()">
+                    <i class="fa-solid fa-xmark"></i> กลับหน้าหลัก
+                </button>
+            </div>
+        </div>
+        
+        <div class="slide-frame">
+            
+            <!-- DECK 1: Event Overview -->
+            <div id="deck1" class="slide-content">
+                <div class="slide-page title-slide">
+                    <h1 class="s-title">IT EMPOWERING <span style="color:var(--tech-cyan)">DAY</span></h1>
+                    <p style="font-size: 1.8rem; opacity: 0.9; font-weight: 300;">in the Era of AI</p>
+                    <div class="footer-note">โครงการบ่มเพาะทักษะ AI สู่การทำงานจริง</div>
+                </div>
+                <div class="slide-page tech-slide">
+                    <h2 class="s-subtitle">โครงสร้างกิจกรรมหลัก</h2>
+                    <div class="grid-2">
+                        <div>
+                            <div class="feature-item tech-item link-card" onclick="scrollToSection('pre-event-section')">
+                                <h3>Pre-Event</h3>
+                                <p>รับโจทย์และเตรียมความพร้อมก่อนงาน เพื่อให้นักศึกษาได้รับการบ่มเพาะและพัฒนาผลงานภาคอุตสาหกรรมก่อนนำเสนอ</p>
+                            </div>
+                            <div class="feature-item tech-item link-card" onclick="scrollToSection('special-talk-section')">
+                                <h3>1. Special Talk</h3>
+                                <p>เสวนาพิเศษ AI Frontier & Career Path เพื่อถ่ายทอดแนวโน้มเทคโนโลยีและทักษะที่นักศึกษาควรรู้</p>
+                            </div>
+                            <div class="feature-item tech-item link-card" onclick="scrollToSection('hackathon-section')">
+                                <h3>2. AI Mini Hackathon</h3>
+                                <p>การแข่งขันกลุ่มขนาดเล็กเพื่อแก้โจทย์จริงด้วย AI พร้อมนำเสนอแนวคิดและต้นแบบ</p>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="feature-item tech-item link-card" onclick="scrollToSection('showcase-section')">
+                                <h3>3. Senior Project Showcase</h3>
+                                <p>จัดแสดงผลงาน Senior Project ชั้นปีที่ 4 พร้อมคัดเลือกผลงานดีเด่นโดยคณะกรรมการ</p>
+                            </div>
+                            <div class="feature-item tech-item link-card" onclick="scrollToSection('innovation-section')">
+                                <h3>4. Industry-driven Innovation Showcase</h3>
+                                <p>โชว์ผลงานนักศึกษาปี 3 ที่แก้โจทย์จริงจากภาคอุตสาหกรรม พร้อมข้อเสนอแนะจากบริษัท</p>
+                            </div>
+                            <div class="feature-item tech-item link-card" onclick="scrollToSection('mini-jobfair-section')">
+                                <h3>5. Mini Job Fair</h3>
+                                <p>จัดพื้นที่ให้บริษัทชั้นนำพบปะนักศึกษาและแนะนำโอกาสฝึกงาน สหกิจศึกษา และการจ้างงาน</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-page tech-slide" id="pre-event-section">
+                    <h2 class="s-subtitle">Pre-Event</h2>
+                    <div class="feature-item">
+                        <h3>รับโจทย์และเตรียมความพร้อม</h3>
+                        <p>กิจกรรมที่จัดขึ้นล่วงหน้าเพื่อให้นักศึกษาได้รับการบ่มเพาะแนวคิดและเตรียมความพร้อมในการพัฒนาโซลูชันภาคอุตสาหกรรมก่อนนำเสนอ</p>
+                        <ul>
+                            <li>มอบโจทย์จริงจากภาคอุตสาหกรรม</li>
+                            <li>อบรมและเวิร์กช็อปเตรียมทักษะที่จำเป็น</li>
+                            <li>สร้างทีมและกำหนดแนวทางการพัฒนา</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="slide-page tech-slide" id="special-talk-section">
+                    <h2 class="s-subtitle">กิจกรรมช่วงเสวนาพิเศษ</h2>
+                    <div class="feature-item">
+                        <h3>AI Frontier & Career Path</h3>
+                        <ul>
+                            <li><b>ช่วงที่ 1:</b> AI Frontier: Future Skills & Careers in the Age of AI – แนวโน้มเทคโนโลยี ปัญญาประดิษฐ์ และทักษะที่จำเป็นสำหรับสายงานเทคโนโลยี</li>
+                            <li><b>ช่วงที่ 2:</b> AI in Action: From Industry Problems to Real Solutions – กรณีศึกษาการนำ AI ไปใช้จริงในการแก้ปัญหาและพัฒนาธุรกิจ</li>
+                            <li><b>ช่วงที่ 3:</b> First Job in AI Era: From Classroom to Real World – แนวทางเตรียมความพร้อมจากการเรียนสู่การทำงานจริง</li>
+                            <li><b>ช่วงที่ 4:</b> Igniting the Spark: From Campus to Microsoft Global Frontier – แรงบันดาลใจจากศิษย์เก่าที่ประสบความสำเร็จระดับสากล</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="slide-page tech-slide" id="hackathon-section">
+                    <h2 class="s-subtitle">AI Mini Hackathon</h2>
+                    <div class="feature-item">
+                        <p>หลังจาก Workshop นักศึกษาจะได้รับโจทย์ปัญหา (Problem Statement) เพื่อพัฒนาแนวทางแก้ไขโดยใช้เทคโนโลยี AI ในรูปแบบการแข่งขันกลุ่มขนาดเล็ก</p>
+                        <ul>
+                            <li>วิเคราะห์โจทย์และออกแบบแนวทางแก้ไข</li>
+                            <li>พัฒนาต้นแบบ (Prototype) หรือแนวคิดโซลูชัน</li>
+                            <li>นำเสนอผลงานต่อคณะกรรมการและรับฟังข้อเสนอแนะ</li>
+                            <li>มีการประกาศผลและมอบรางวัลในงาน</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="slide-page tech-slide" id="showcase-section">
+                    <h2 class="s-subtitle">Senior Project & Innovation Showcase</h2>
+                    <div class="grid-2">
+                        <div>
+                            <div class="feature-visual">
+                                <div>
+                                    <h3>Senior Project Showcase</h3>
+                                    <p>จัดแสดง 9 ผลงาน Senior Project ที่โดดเด่นที่สุดจากชั้นปีที่ 4 เพื่อให้บริษัทและกรรมการพิจารณาคัดเลือกผลงานที่ดีที่สุด</p>
+                                    <ul>
+                                        <li>คัดเลือก 3 ผลงานรางวัลสำคัญ</li>
+                                        <li>ประกาศรางวัลที่ 1, 2 และ 3</li>
+                                        <li>ให้คำแนะนำและโอกาสต่อยอดผลงานเชิงธุรกิจ</li>
+                                    </ul>
+                                </div>
+                                <div class="visual-icon"><i class="fa-solid fa-trophy"></i></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="feature-visual" id="innovation-section">
+                                <div>
+                                    <h3>Industry-driven Innovation Project</h3>
+                                    <p>ผลงานชั้นปีที่ 3 ที่พัฒนาเพื่อแก้โจทย์จริงจากบริษัท พร้อมรับความคิดเห็นจากตัวแทนอุตสาหกรรม</p>
+                                </div>
+                                <div class="visual-icon"><i class="fa-solid fa-industry"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 20px; color: #475569; font-size: 1rem; line-height: 1.7;">การแสดงผลงานทั้งสองส่วนนี้ช่วยสร้างแพลตฟอร์มเชื่อมโยงนักศึกษากับภาคอุตสาหกรรม และฝึกทักษะ Work-Ready Skills ที่จำเป็นต่อการทำงานจริง</p>
+                </div>
+                <div class="slide-page tech-slide" id="mini-jobfair-section">
+                    <h2 class="s-subtitle">Mini Job Fair</h2>
+                    <div class="mini-jobfair-grid">
+                        <div class="mini-jobfair-art">
+                            <img src="mini_jobfair.png" alt="บรรยากาศ Mini Job Fair" />
+                        </div>
+                        <div class="mini-jobfair-card">
+                            <h3>บรรยากาศงาน Mini Job Fair</h3>
+                            <p>นำเสนอพื้นที่พบปะมืออาชีพระหว่างนักศึกษากับบริษัทไอทีชั้นนำ พร้อมการแนะนำตำแหน่งงาน การเตรียม Resume และแนวทางการสมัครงาน</p>
+                            <ul>
+                                <li>เชื่อมโยงนักศึกษากับภาคอุตสาหกรรม</li>
+                                <li>เปิดโอกาสฝึกงาน สหกิจศึกษา และการจ้างงาน</li>
+                                <li>ช่วยสร้างเครือข่ายและเพิ่มช่องทางเข้าสู่ตลาดแรงงาน</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="footer-note">IT Empowering Day in the Era of AI</div>
+                </div>
+            </div>
+
+            <!-- DECK 2: SCG Pitch -->
+            <div id="deck2" class="slide-content">
+                <div class="slide-page title-slide" style="background: linear-gradient(135deg, #ed1c24 0%, #a31116 100%);">
+                    <h1 class="s-title">Strategic Collaboration<br>with SCG</h1>
+                    <p style="font-size: 1.5rem; opacity: 0.9;">Leading Innovation Together</p>
+                </div>
+                <div class="slide-page scg-slide">
+                    <h2 class="s-subtitle">Senior Project Judges</h2>
+                    <div class="grid-2">
+                        <div>
+                            <p style="font-size: 1.3rem; margin-bottom: 25px; line-height: 1.6;">เชิญผู้เชี่ยวชาญจาก SCG ร่วมเป็นกรรมการตัดสินผลงาน Senior Project Showcase ทั้ง 9 ผลงาน เพื่อ:</p>
+                            <ul>
+                                <li>จัดแสดง 9 ผลงาน Senior Project ที่โดดเด่นที่สุดจากชั้นปีที่ 4</li>
+                                <li>ให้บริษัทและกรรมการพิจารณาคัดเลือกผลงานที่ดีที่สุด</li>
+                                <li>คัดเลือก 3 ผลงานรางวัลสำคัญ พร้อมประกาศรางวัลที่ 1, 2 และ 3</li>
+                                <li>ให้คำแนะนำและโอกาสต่อยอดผลงานเชิงธุรกิจ</li>
+                            </ul>
+                        </div>
+                        <div style="background: #f8fafc; padding: 20px 20px 30px; border-radius: 20px; text-align: center; border: 1px solid #e2e8f0;">
+                            <div style="border-radius: 18px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 16px 30px rgba(15,23,42,0.08);">
+                                <img src="IT_Empoerint2025.png" alt="IT Empowering 2025" style="width: 100%; display: block;" />
+                            </div>
+                            <h4 style="color:var(--scg-red); font-size: 1.5rem; margin-bottom: 14px;">IT Empowering 2025</h4>
+                            <p style="margin: 0;">ร่วมกำหนดทิศทางนวัตกรรมนักศึกษาและคนรุ่นใหม่</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-page scg-slide">
+                    <h2 class="s-subtitle">Mini Job Fair & Branding</h2>
+                    <div class="grid-2">
+                        <div class="mini-jobfair-art">
+                            <img src="mini_jobfair.png" alt="บรรยากาศ Mini Job Fair" />
+                            <div class="mini-jobfair-caption">ตอกย้ำภาพลักษณ์ Tech-Focused ของ SCG</div>
+                        </div>
+                        <div>
+                            <h3>รายละเอียด Mini Job Fair</h3>
+                            <div class="feature-item">
+                                <p>จัดพื้นที่ให้บริษัทชั้นนำในอุตสาหกรรมเทคโนโลยีสารสนเทศเข้าร่วมพบปะนักศึกษา เพื่อให้ข้อมูลเกี่ยวกับตำแหน่งงาน ทักษะที่ต้องการ และแนวทางการทำงานในสายอาชีพ</p>
+                            </div>
+                            <div class="feature-item">
+                                <p>พร้อมให้คำแนะนำในการจัดทำ Resume และการเตรียมตัวสมัครงาน เพื่อเชื่อมโยงนักศึกษากับภาคอุตสาหกรรม และเพิ่มโอกาสในการฝึกงาน สหกิจศึกษา และการจ้างงาน</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DECK 3: Academic Collaboration -->
+            <div id="deck3" class="slide-content">
+                <div class="slide-page title-slide" style="background: #1e293b;">
+                    <h1 class="s-title">Co-Creating Talent</h1>
+                    <p style="font-size: 1.5rem; color: var(--scg-red);">Academic Collaboration Plan</p>
+                </div>
+                <div class="slide-page scg-slide">
+                    <h2 class="s-subtitle">ความร่วมมือพัฒนารายวิชา (Industry-Academia Collaboration)</h2>
+                    <div class="grid-2">
+                        <div>
+                            <h3>รูปแบบความร่วมมือ (Proposed Collaboration Models)</h3>
+                            <div class="feature-item">
+                                <h3>Model 1: Co-Teaching</h3>
+                                <p><strong>มหาวิทยาลัย:</strong> สอนทฤษฎี / Framework / Concept</p>
+                                <p><strong>SCG:</strong> ถ่ายทอดประสบการณ์จริง + Case Study + Tools</p>
+                                <p><strong>รูปแบบ:</strong> Guest Lecture + Workshop</p>
+                            </div>
+                            <div class="feature-item">
+                                <h3>Model 2: Industry Workshop</h3>
+                                <p>SCG จัด Workshop เชิงปฏิบัติ (1–2 sessions)</p>
+                                <p>เน้น Hands-on, Use Case จริง, Tool ที่ใช้ในองค์กร</p>
+                            </div>
+                            <div class="feature-item">
+                                <h3>Model C: Content & Tool Support</h3>
+                                <p>SCG ร่วม Review / Co-design เนื้อหารายวิชา</p>
+                                <p>สนับสนุน Case Study, Dataset, Tools, หรือโจทย์จริง</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <h3 style="font-size: 1.3rem;">ประโยชน์ต่อ SCG</h3>
+                            <ul>
+
+                                <li>เข้าถึงและพัฒนาศักยภาพ Talent ที่ตรงกับความต้องการองค์กร</li>
+
+                                <li>เสริมภาพลักษณ์องค์กร (Employer Branding) ในสถาบันการศึกษา</li>
+
+                                <li>มีส่วนร่วมในการออกแบบหลักสูตร (Curriculum Co-creation)</li>
+
+                                <li>โอกาสต่อยอดสู่โครงการวิจัย / สหกิจศึกษา / โครงงาน</li>
+
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-page title-slide" style="background: white; color: #333;">
+                    <h1 style="color: var(--scg-red);">Next Steps</h1>
+                    <p style="font-size: 1.5rem; margin-top: 30px;">เราพร้อมที่จะหารือรายละเอียด<br>เพื่อสร้างความร่วมมือที่ยั่งยืนร่วมกับ SCG</p>
+                    <div style="margin-top: 50px;">
+                        <i class="fa-solid fa-handshake" style="font-size: 80px; color: #eee;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast for Errors -->
+    <div id="error-toast">การเปิดเต็มจอถูกจำกัดโดยเบราว์เซอร์ในโหมดพรีวิว</div>
+
+    <script>
+        function openDeck(deckId) {
+            document.getElementById('hub-container').style.display = 'none';
+            const overlay = document.getElementById('slide-overlay');
+            overlay.style.display = 'flex';
+            
+            const allDecks = document.querySelectorAll('.slide-content');
+            allDecks.forEach(d => d.classList.remove('active-deck'));
+            
+            const activeDeck = document.getElementById(deckId);
+            activeDeck.classList.add('active-deck');
+            
+            const names = {
+                'deck1': '1. ภาพรวมโครงการ (Overview)',
+                'deck2': '2. ข้อเสนอสำหรับ SCG (Proposal)',
+                'deck3': '3. แผนความร่วมมือวิชาการ (Academic)'
+            };
+            document.getElementById('current-deck-name').innerText = names[deckId];
+            document.querySelector('.slide-frame').scrollTop = 0;
+        }
+
+        function closeDeck() {
+            document.getElementById('hub-container').style.display = 'block';
+            document.getElementById('slide-overlay').style.display = 'none';
+            // Safe exit fullscreen
+            try {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(err => console.log("Exit Fullscreen error caught"));
+                }
+            } catch(e) {}
+        }
+
+        function scrollToSection(sectionId) {
+            const target = document.getElementById(sectionId);
+            if (!target) return;
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('error-toast');
+            toast.innerText = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        function toggleFullScreen() {
+            try {
+                if (!document.fullscreenElement) {
+                    const docEl = document.documentElement;
+                    const requestMethod = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+
+                    if (requestMethod) {
+                        requestMethod.call(docEl).catch(err => {
+                            console.warn("Fullscreen request failed:", err);
+                            showToast("ไม่สามารถเปิดเต็มจอได้ในหน้านี้ (ข้อจำกัดด้านความปลอดภัย)");
+                        });
+                    } else {
+                        showToast("เบราว์เซอร์ของคุณไม่รองรับโหมดเต็มหน้าจอ");
+                    }
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            } catch (err) {
+                console.error("Fullscreen error:", err);
+                showToast("เกิดข้อผิดพลาดในการปรับขนาดหน้าจอ");
+            }
+        }
+    </script>
+</body>
+</html>
